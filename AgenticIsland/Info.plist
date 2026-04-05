@@ -19,7 +19,7 @@
 
     <!-- Sparkle Update Configuration -->
     <key>SUFeedURL</key>
-    <string>https://agenticisland.com/appcast.xml</string>
+    <string>https://raw.githubusercontent.com/hanruihua/agentic-island/main/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>w5NwH5KRfE7LfeZ09J8lWx3UQrWTqUbfH4HHBa1OPRk=</string>
     <key>SUEnableAutomaticChecks</key>

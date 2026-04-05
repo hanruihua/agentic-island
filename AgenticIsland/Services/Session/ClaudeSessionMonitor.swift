@@ -31,6 +31,14 @@ class ClaudeSessionMonitor: ObservableObject {
     // MARK: - Monitoring Lifecycle
 
     func startMonitoring() {
+        // Discover already-running Claude Code sessions
+        let discovered = ActiveSessionScanner.discoverActiveSessions()
+        if !discovered.isEmpty {
+            Task {
+                await SessionStore.shared.process(.activeSessionsDiscovered(discovered))
+            }
+        }
+
         HookSocketServer.shared.start(
             onEvent: { event in
                 Task {

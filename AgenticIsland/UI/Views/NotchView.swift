@@ -19,6 +19,7 @@ struct NotchView: View {
     @ObservedObject var viewModel: NotchViewModel
     @StateObject private var sessionMonitor = ClaudeSessionMonitor()
     @StateObject private var activityCoordinator = NotchActivityCoordinator.shared
+    @StateObject private var usageTracker = UsageTracker.shared
     @ObservedObject private var updateManager = UpdateManager.shared
     @State private var previousPendingIds: Set<String> = []
     @State private var previousWaitingForInputIds: Set<String> = []
@@ -180,6 +181,7 @@ struct NotchView: View {
                     }
                     .onTapGesture {
                         if viewModel.status != .opened {
+                            viewModel.sessionCount = sessionMonitor.instances.count
                             viewModel.notchOpen(reason: .click)
                         }
                     }
@@ -190,6 +192,8 @@ struct NotchView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             sessionMonitor.startMonitoring()
+            usageTracker.startTracking(sessions: sessionMonitor.instances)
+            viewModel.sessionCount = sessionMonitor.instances.count
             // On non-notched devices, keep visible so users have a target to interact with
             if !viewModel.hasPhysicalNotch {
                 isVisible = true
@@ -204,6 +208,8 @@ struct NotchView: View {
         .onChange(of: sessionMonitor.instances) { _, instances in
             handleProcessingChange()
             handleWaitingForInputChange(instances)
+            usageTracker.refresh(sessions: instances)
+            viewModel.sessionCount = instances.count
         }
     }
 
@@ -227,16 +233,27 @@ struct NotchView: View {
 
             // Main content only when opened
             if viewModel.status == .opened {
-                contentView
-                    .frame(width: notchSize.width - 24) // Fixed width to prevent reflow
-                    .transition(
-                        .asymmetric(
-                            insertion: .scale(scale: 0.8, anchor: .top)
-                                .combined(with: .opacity)
-                                .animation(.smooth(duration: 0.35)),
-                            removal: .opacity.animation(.easeOut(duration: 0.15))
+                VStack(spacing: 0) {
+                    contentView
+                        .frame(width: notchSize.width - 24) // Fixed width to prevent reflow
+
+                    // Usage bar at the bottom (only for instances view)
+                    if case .instances = viewModel.contentType {
+                        UsageBarView(
+                            usage: usageTracker.usage,
+                            hasData: usageTracker.hasData
                         )
+                        .frame(width: notchSize.width - 24)
+                    }
+                }
+                .transition(
+                    .asymmetric(
+                        insertion: .scale(scale: 0.8, anchor: .top)
+                            .combined(with: .opacity)
+                            .animation(.smooth(duration: 0.35)),
+                        removal: .opacity.animation(.easeOut(duration: 0.15))
                     )
+                )
             }
         }
     }
@@ -422,6 +439,7 @@ struct NotchView: View {
         if !newPendingIds.isEmpty &&
            viewModel.status == .closed &&
            !TerminalVisibilityDetector.isTerminalVisibleOnCurrentSpace() {
+            viewModel.sessionCount = sessionMonitor.instances.count
             viewModel.notchOpen(reason: .notification)
         }
 

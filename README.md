@@ -4,6 +4,8 @@
   <p align="center">
     A macOS menu bar app that brings Dynamic Island-style notifications to Claude Code CLI sessions.
     <br />
+    <em>Personal fun side project, forked from <a href="https://github.com/farouqaldori/claude-island">farouqaldori/claude-island</a>.</em>
+    <br />
     <br />
     <a href="https://github.com/hanruihua/agentic-island/releases/latest" target="_blank" rel="noopener noreferrer">
       <img src="https://img.shields.io/github/v/release/hanruihua/agentic-island?style=rounded&color=white&labelColor=000000&label=release" alt="Release Version" />
@@ -40,6 +42,10 @@ xcodebuild -scheme AgenticIsland -configuration Release build
 Agentic Island installs hooks into `~/.claude/hooks/` that communicate session state via a Unix socket. The app listens for events and displays them in the notch overlay.
 
 When Claude needs permission to run a tool, the notch expands with approve/deny buttons—no need to switch to the terminal.
+
+## Acknowledgments
+
+This project is a personal fork of [Claude Island](https://github.com/farouqaldori/claude-island) by [@farouqaldori](https://github.com/farouqaldori). Thanks for the original work!
 
 ## Analytics
 

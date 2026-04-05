@@ -37,21 +37,10 @@ struct ClaudeInstancesView: View {
 
     // MARK: - Instances List
 
-    /// Priority: active (approval/processing/compacting) > waitingForInput > idle
-    /// Secondary sort: by last user message date (stable - doesn't change when agent responds)
-    /// Note: approval requests stay in their date-based position to avoid layout shift
+    /// Sort by most recently active first (last activity timestamp)
     private var sortedInstances: [SessionState] {
         sessionMonitor.instances.sorted { a, b in
-            let priorityA = phasePriority(a.phase)
-            let priorityB = phasePriority(b.phase)
-            if priorityA != priorityB {
-                return priorityA < priorityB
-            }
-            // Sort by last user message date (more recent first)
-            // Fall back to lastActivity if no user messages yet
-            let dateA = a.lastUserMessageDate ?? a.lastActivity
-            let dateB = b.lastUserMessageDate ?? b.lastActivity
-            return dateA > dateB
+            a.lastActivity > b.lastActivity
         }
     }
 

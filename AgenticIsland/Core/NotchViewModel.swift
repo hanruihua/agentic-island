@@ -45,6 +45,7 @@ class NotchViewModel: ObservableObject {
     @Published var openReason: NotchOpenReason = .unknown
     @Published var contentType: NotchContentType = .instances
     @Published var isHovering: Bool = false
+    @Published var sessionCount: Int = 0
 
     // MARK: - Dependencies
 
@@ -79,9 +80,18 @@ class NotchViewModel: ObservableObject {
         case .instances:
             return CGSize(
                 width: min(screenRect.width * 0.4, 480),
-                height: 320
+                height: instancesHeight
             )
         }
+    }
+
+    /// Instances panel height, derived from session count
+    /// Each row ~44pt + 8pt list padding + 36pt usage bar + 24pt header
+    var instancesHeight: CGFloat {
+        let rowHeight: CGFloat = 44
+        let rows = max(1, CGFloat(sessionCount))
+        let contentHeight = rows * rowHeight + 8 + 36 + 24
+        return min(max(contentHeight, 140), 400)
     }
 
     // MARK: - Animation
@@ -116,6 +126,16 @@ class NotchViewModel: ObservableObject {
 
         soundSelector.$isPickerExpanded
             .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &cancellables)
+
+        // Keep sessionCount in sync for dynamic instances height
+        SessionStore.shared.sessionsPublisher
+            .receive(on: DispatchQueue.main)
+            .map(\.count)
+            .removeDuplicates()
+            .sink { [weak self] count in
+                self?.sessionCount = count
+            }
             .store(in: &cancellables)
     }
 

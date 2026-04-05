@@ -188,7 +188,7 @@ struct BashResultContent: View {
                     Text("Background task: \(bgId)")
                         .font(.system(size: 10, design: .monospaced))
                 }
-                .foregroundColor(TerminalColorsTerminalColors.coral)
+                .foregroundColor(TerminalColors.coral)
             }
 
             // Return code interpretation

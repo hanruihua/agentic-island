@@ -75,6 +75,9 @@ actor SessionStore {
         case .sessionEnded(let sessionId):
             await processSessionEnd(sessionId: sessionId)
 
+        case .activeSessionsDiscovered(let discovered):
+            await processDiscoveredSessions(discovered)
+
         case .loadHistory(let sessionId, let cwd):
             await loadHistoryFromFile(sessionId: sessionId, cwd: cwd)
 
@@ -179,6 +182,30 @@ actor SessionStore {
             isInTmux: false,  // Will be updated
             phase: .idle
         )
+    }
+
+    // MARK: - Startup Discovery
+
+    private func processDiscoveredSessions(_ discovered: [DiscoveredSession]) async {
+        for d in discovered {
+            // Skip if we already have this session (e.g. hook arrived first)
+            guard sessions[d.sessionId] == nil else { continue }
+
+            let projectName = URL(fileURLWithPath: d.cwd).lastPathComponent
+            let session = SessionState(
+                sessionId: d.sessionId,
+                cwd: d.cwd,
+                projectName: projectName,
+                pid: d.pid,
+                phase: .idle
+            )
+            sessions[d.sessionId] = session
+
+            // Load conversation info from JSONL if available
+            scheduleFileSync(sessionId: d.sessionId, cwd: d.cwd)
+
+            Self.logger.info("Registered discovered session \(d.sessionId.prefix(8), privacy: .public) (pid \(d.pid))")
+        }
     }
 
     private func processToolTracking(event: HookEvent, session: inout SessionState) {
