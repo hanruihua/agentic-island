@@ -38,6 +38,7 @@ enum AppSettings {
 
     private enum Keys {
         static let notificationSound = "notificationSound"
+        static let obsidianVaultPath = "obsidianVaultPath"
     }
 
     // MARK: - Notification Sound
@@ -53,6 +54,18 @@ enum AppSettings {
         }
         set {
             defaults.set(newValue.rawValue, forKey: Keys.notificationSound)
+        }
+    }
+
+    // MARK: - Obsidian Vault Path
+
+    /// Path to the Obsidian vault containing Planning/ToDoList.md and Planning/TimeTable.md
+    static var obsidianVaultPath: String {
+        get {
+            defaults.string(forKey: Keys.obsidianVaultPath) ?? ""
+        }
+        set {
+            defaults.set(newValue, forKey: Keys.obsidianVaultPath)
         }
     }
 }

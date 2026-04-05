@@ -76,6 +76,8 @@ struct NotchMenuView: View {
                 }
             }
 
+            VaultPathRow()
+
             AccessibilityRow(isEnabled: AXIsProcessTrusted())
 
             Divider()
@@ -522,5 +524,77 @@ struct MenuToggleRow: View {
 
     private var textColor: Color {
         isHovered ? TerminalColors.ivory : TerminalColors.warmSilver
+    }
+}
+
+// MARK: - Vault Path Row
+
+struct VaultPathRow: View {
+    @State private var isHovered = false
+    @State private var vaultPath = AppSettings.obsidianVaultPath
+
+    private var displayPath: String {
+        if vaultPath.isEmpty { return "Not set" }
+        return (vaultPath as NSString).lastPathComponent
+    }
+
+    var body: some View {
+        Button {
+            pickFolder()
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "book")
+                    .font(.system(size: 12))
+                    .foregroundColor(textColor)
+                    .frame(width: 16)
+
+                Text("Obsidian Vault")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(textColor)
+
+                Spacer()
+
+                Text(displayPath)
+                    .font(.system(size: 11))
+                    .foregroundColor(vaultPath.isEmpty ? TerminalColors.stoneGray : TerminalColors.warmSilver)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isHovered ? TerminalColors.backgroundHover : Color.clear)
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+    }
+
+    private var textColor: Color {
+        isHovered ? TerminalColors.ivory : TerminalColors.warmSilver
+    }
+
+    private func pickFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.message = "Select your Obsidian vault folder"
+        panel.prompt = "Select"
+
+        // Start from current vault path or home
+        if !vaultPath.isEmpty {
+            panel.directoryURL = URL(fileURLWithPath: vaultPath)
+        }
+
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            let path = url.path
+            Task { @MainActor in
+                vaultPath = path
+                AppSettings.obsidianVaultPath = path
+                ObsidianService.shared.updateVaultPath(path)
+            }
+        }
     }
 }

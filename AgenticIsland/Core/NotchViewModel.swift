@@ -27,12 +27,14 @@ enum NotchContentType: Equatable {
     case instances
     case menu
     case chat(SessionState)
+    case obsidian
 
     var id: String {
         switch self {
         case .instances: return "instances"
         case .menu: return "menu"
         case .chat(let session): return "chat-\(session.sessionId)"
+        case .obsidian: return "obsidian"
         }
     }
 }
@@ -81,6 +83,11 @@ class NotchViewModel: ObservableObject {
             return CGSize(
                 width: min(screenRect.width * 0.4, 480),
                 height: instancesHeight
+            )
+        case .obsidian:
+            return CGSize(
+                width: min(screenRect.width * 0.4, 480),
+                height: 400
             )
         }
     }
@@ -288,6 +295,10 @@ class NotchViewModel: ObservableObject {
 
     func toggleMenu() {
         contentType = contentType == .menu ? .instances : .menu
+    }
+
+    func toggleObsidian() {
+        contentType = contentType == .obsidian ? .instances : .obsidian
     }
 
     func showChat(for session: SessionState) {

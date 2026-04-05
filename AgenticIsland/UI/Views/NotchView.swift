@@ -331,6 +331,20 @@ struct NotchView: View {
 
             Spacer()
 
+            // Obsidian toggle
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    viewModel.toggleObsidian()
+                }
+            } label: {
+                Image(systemName: viewModel.contentType == .obsidian ? "book.fill" : "book")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(viewModel.contentType == .obsidian ? TerminalColors.coral : TerminalColors.stoneGray)
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
             // Menu toggle
             Button {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -380,6 +394,8 @@ struct NotchView: View {
                     sessionMonitor: sessionMonitor,
                     viewModel: viewModel
                 )
+            case .obsidian:
+                ObsidianView(obsidian: ObsidianService.shared)
             }
         }
         .frame(width: notchSize.width - 24) // Fixed width to prevent text reflow
