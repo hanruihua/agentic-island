@@ -33,8 +33,9 @@ Pods/
 *.iml
 .vscode/
 
-# Sparkle signing keys (NEVER commit these!)
+# Signing keys and certificates (NEVER commit these!)
 .sparkle-keys/
+*.p12
 
 # Release artifacts
 releases/
