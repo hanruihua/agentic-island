@@ -112,6 +112,8 @@ class NotchViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let events = EventMonitors.shared
     private var hoverTimer: DispatchWorkItem?
+    private var lastAppSwitchTime: Date = .distantPast
+    private var lastCloseTime: Date = .distantPast
 
     // MARK: - Initialization
 
@@ -133,6 +135,17 @@ class NotchViewModel: ObservableObject {
 
         soundSelector.$isPickerExpanded
             .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &cancellables)
+
+        // Detect app switches to suppress hover-to-open
+        NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didActivateApplicationNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.lastAppSwitchTime = Date()
+                // Cancel any pending hover open
+                self?.hoverTimer?.cancel()
+                self?.hoverTimer = nil
+            }
             .store(in: &cancellables)
 
         // Keep sessionCount in sync for dynamic instances height
@@ -187,16 +200,6 @@ class NotchViewModel: ObservableObject {
         // Cancel any pending hover timer
         hoverTimer?.cancel()
         hoverTimer = nil
-
-        // Start hover timer to auto-expand after 1 second
-        if isHovering && (status == .closed || status == .popping) {
-            let workItem = DispatchWorkItem { [weak self] in
-                guard let self = self, self.isHovering else { return }
-                self.notchOpen(reason: .hover)
-            }
-            hoverTimer = workItem
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: workItem)
-        }
     }
 
     private func handleMouseDown() {
@@ -215,7 +218,11 @@ class NotchViewModel: ObservableObject {
                 }
             }
         case .closed, .popping:
-            if geometry.isPointInNotch(location) {
+            // Ignore clicks shortly after closing to prevent reposted clicks from reopening
+            let timeSinceClose = Date().timeIntervalSince(lastCloseTime)
+            // Suppress clicks shortly after an app switch to prevent accidental opens
+            let timeSinceAppSwitch = Date().timeIntervalSince(lastAppSwitchTime)
+            if geometry.isPointInNotch(location) && timeSinceClose > 0.3 && timeSinceAppSwitch > 1.0 {
                 notchOpen(reason: .click)
             }
         }
@@ -279,6 +286,7 @@ class NotchViewModel: ObservableObject {
         if case .chat(let session) = contentType {
             currentChatSession = session
         }
+        lastCloseTime = Date()
         status = .closed
         contentType = .instances
     }

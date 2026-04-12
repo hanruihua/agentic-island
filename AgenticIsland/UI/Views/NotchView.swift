@@ -452,11 +452,9 @@ struct NotchView: View {
         let currentIds = Set(sessions.map { $0.stableId })
         let newPendingIds = currentIds.subtracting(previousPendingIds)
 
-        if !newPendingIds.isEmpty &&
-           viewModel.status == .closed &&
-           !TerminalVisibilityDetector.isTerminalVisibleOnCurrentSpace() {
+        // Update session count but don't auto-open — only clicks should open the island
+        if !newPendingIds.isEmpty {
             viewModel.sessionCount = sessionMonitor.instances.count
-            viewModel.notchOpen(reason: .notification)
         }
 
         previousPendingIds = currentIds

@@ -13,6 +13,7 @@ class NotchWindowController: NSWindowController {
     let viewModel: NotchViewModel
     private let screen: NSScreen
     private var cancellables = Set<AnyCancellable>()
+    private static var hasPerformedBootAnimation = false
 
     init(screen: NSScreen) {
         self.screen = screen
@@ -86,9 +87,12 @@ class NotchWindowController: NSWindowController {
         // Start with ignoring mouse events (closed state)
         notchWindow.ignoresMouseEvents = true
 
-        // Perform boot animation after a brief delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.viewModel.performBootAnimation()
+        // Only perform boot animation on first launch, not on screen change recreations
+        if !NotchWindowController.hasPerformedBootAnimation {
+            NotchWindowController.hasPerformedBootAnimation = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.viewModel.performBootAnimation()
+            }
         }
     }
 
